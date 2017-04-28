@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.1/animate.min.css">
+  <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="style.css">
+  <title>Money Manager</title>
+  
+  <script type="text/javascript">
+	var account = {};
+account.balance = 100;
+
+function init(){
+  var currentDate = moment().format('YYYY-MM-DD');
+  $('#date').attr("max", currentDate);
+  clickHandler();
+}
+
+function clickHandler(){
+  $("#newTransaction").submit(addTransaction);
+  $("#transactions").on("click", ".trashButton", deleteTransaction); // deferred event handler
+  $("#typeOfTransaction").change(filterTransactions);
+}
+
+function addTransaction(event){
+  event.preventDefault();
+
+  var transactionType = $('#transactionType').val();
+  var content = $('#content').val();
+  var amount = parseFloat($('#amount').val());
+  var date = $('#date').val();
+  var formattedDate = moment(date).format("ll");
+
+  updateBalance(transactionType, amount);
+
+  var $tableRow = $("#template").clone();
+  if (transactionType === "deposit"){
+    $tableRow.addClass("deposit");
+  } else{
+    $tableRow.addClass("withdrawals");
+  }
+  $tableRow.removeAttr("id");
+  $tableRow.data("amount", getFormattedAmount(transactionType, amount));
+  $tableRow.children(".date").text(formattedDate);
+  $tableRow.children(".content").text(content);
+  $tableRow.children(".amount").text(numeral(getFormattedAmount(transactionType, amount)).format('$0,0.00'));
+  $tableRow.children(".runningBalance").text(numeral(account["balance"]).format('$0,0.00'));
+  $("#transactions").prepend($tableRow);
+  $("#newTransaction").trigger("reset"); // reset form
+}
+
+function deleteTransaction(){
+  var $currentRow = $(this).closest("tr");
+  var rowAmount = $currentRow.data("amount");
+
+  undoTransaction(rowAmount);
+  $currentRow.remove();
+}
+
+function undoTransaction(rowAmount){
+  account.balance -= rowAmount;
+  $('h3').text("Current Account Balance: " + numeral(account["balance"]).format('$0,0.00'));
+}
+
+function updateBalance(transactionType, amount){
+  if (transactionType === "deposit"){
+    account.balance += amount;
+  } else{
+    account.balance -= amount;
+  }
+  $('h3').text("Current Account Balance: " + numeral(account["balance"]).format('$0,0.00'));
+  
+}
+
+function getFormattedAmount(transactionType, amount){
+  if (transactionType === "deposit"){
+    return amount;
+  } else{
+    return amount * -1;
+  }
+}
+
+function filterTransactions(){
+  var transactionType = $(this).val();
+  $("#transactions tr").hide();
+
+  switch(transactionType){
+    case "deposits":
+      $(".deposit").show();
+      break;
+    case "withdrawals":
+      $('.withdrawals').show();
+      break;
+    default:
+      $('#transactions tr').not("#template").show();
+      break;
+  }
+}
+  
+  
+  
+  </script>
+  
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+        <h2>Money Manager</h2>
+      <form id="newTransaction">
+        <div class="row">
+            <select id="transactionType" required>
+              <option value="income">Income</option>
+              <option value="expense" selected>Expense</option>
+            </select>
+            <div class="input-group">
+              <span class="input-group-addon">Contents: </span>
+              <input id="content" type="text" class="form-control" required>
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">$</span>
+              <input id="amount" type="number" size="37" min="0.00" step="0.01" required>
+            </div>
+            <div class="input-group">
+              <span class="input-group-addon">Date</span>
+              <input id="date" type="date" size="35" required>
+            </div>
+            <button class="btn btn-success">Add transaction</button>
+        </div>
+      </form>
+    </div>
+    <div class="row">
+      <h3>Current Account Balance: $500.00</h3>
+    </div>
+    <div class="row">
+      <div class="col-md-3 col-md-offset-9" id="display">
+        <label>Display options: </label>
+        <select id="typeOfTransaction">
+          <option value="all" selected>All</option>
+          <option value="incomes">Incomes Only</option>
+          <option value="expenses">Expenses Only</option>
+        </select>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-xs-2">Date</th>
+          <th class="col-xs-3">Contents</th>
+          <th class="col-xs-2">Amount</th>
+          <th class="col-xs-2">Delete Transaction</th>
+          <th class="col-xs-3">Running Balance</th>
+        </tr>
+      </thead>
+      <tbody id="transactions">
+        <tr id="template">
+          <td class="date"></td>
+          <td class="content"></td>
+          <td class="amount"></td>
+          <td class="deleteTransaction">
+            <button type="button" class="btn-sm trashButton">
+              <span class="glyphicon glyphicon-trash"</span>
+            </button>
+          </td>
+          <td class="runningBalance"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="row">
+      <div class="col-xs-12" id="footer"></div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.1/moment.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/numeral.js/1.4.5/numeral.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

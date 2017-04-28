@@ -1,1 +1,2 @@
-# Cloud_Computing_Final
+# CSYE6225 Final Project
+# Money Manager Applcation
